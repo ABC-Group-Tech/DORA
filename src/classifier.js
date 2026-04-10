@@ -1,25 +1,21 @@
-import { SOURCES } from './constants.js';
-
 /**
- * referrer URL을 기반으로 다운로드 출처를 판별한다.
- * referrer가 없거나 어떤 패턴에도 매칭되지 않으면 SOURCES.ETC를 반환한다.
+ * referrer URL을 동적 소스 목록과 대조해 출처를 판별한다.
  *
- * @param {string} referrer - downloadItem.referrer
- * @returns {object} SOURCES 객체 중 하나
+ * @param {string} referrer   - downloadItem.referrer
+ * @param {object[]} sources  - chrome.storage.sync에서 불러온 소스 배열
+ * @returns {object|null}     - 매칭된 소스 객체, 없으면 null
  */
-export function classifySource(referrer) {
-  if (!referrer || referrer.trim() === '') {
-    return SOURCES.ETC;
-  }
+export function classifySource(referrer, sources) {
+  if (!referrer || referrer.trim() === '') return null;
 
-  for (const [key, source] of Object.entries(SOURCES)) {
-    if (key === 'ETC') continue;
-    for (const pattern of source.patterns) {
-      if (pattern.test(referrer)) {
-        return source;
-      }
+  for (const source of sources) {
+    const pattern = (source.urlPattern ?? '').trim();
+    if (!pattern) continue;
+
+    if (referrer.includes(pattern)) {
+      return source;
     }
   }
 
-  return SOURCES.ETC;
+  return null;
 }
