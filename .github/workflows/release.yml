@@ -31,15 +31,20 @@ jobs:
             --clean \
             --windowed \
             --onedir \
-            --name "DORA 설치" \
+            --name "DORA_installer" \
             --add-data "dora_host.py:." \
             installer_gui.py
+
+      - name: .app zip 압축
+        run: |
+          cd native/dist
+          zip -r mac_app.zip "DORA_installer.app"
 
       - name: 아티팩트 업로드
         uses: actions/upload-artifact@v4
         with:
           name: mac-app
-          path: native/dist/DORA 설치.app
+          path: native/dist/mac_app.zip
 
   # ── 윈도우 빌드 ─────────────────────────────────────────────
   build-windows:
@@ -60,20 +65,13 @@ jobs:
       - name: 윈도우 exe 빌드
         run: |
           cd native
-          pyinstaller `
-            --noconfirm `
-            --clean `
-            --windowed `
-            --onefile `
-            --name "DORA_설치" `
-            --add-data "dora_host.py;." `
-            installer_gui.py
+          pyinstaller --noconfirm --clean --windowed --onefile --name "DORA_installer" --add-data "dora_host.py;." installer_gui.py
 
       - name: 아티팩트 업로드
         uses: actions/upload-artifact@v4
         with:
           name: windows-exe
-          path: native/dist/DORA_설치.exe
+          path: native/dist/DORA_installer.exe
 
   # ── GitHub Release 생성 ─────────────────────────────────────
   release:
@@ -100,13 +98,13 @@ jobs:
 
       # DORA_맥.zip 구성:
       #   DORA_맥/
-      #   ├── DORA 설치.app      ← 설치 앱
-      #   ├── DORA_확장프로그램/  ← Chrome에 로드할 폴더
+      #   ├── DORA_installer.app/   ← 설치 앱
+      #   ├── DORA_확장프로그램/     ← Chrome에 로드할 폴더
       #   └── DORA_설치가이드.txt
       - name: 맥 패키지 생성
         run: |
           mkdir -p DORA_맥/DORA_확장프로그램
-          cp -r mac-app/DORA\ 설치.app DORA_맥/
+          unzip mac-app/mac_app.zip -d DORA_맥/
           cp manifest.json background.js DORA_맥/DORA_확장프로그램/
           cp -r src popup icons DORA_맥/DORA_확장프로그램/
           cp DORA_설치가이드.txt DORA_맥/
@@ -114,13 +112,13 @@ jobs:
 
       # DORA_윈도우.zip 구성:
       #   DORA_윈도우/
-      #   ├── DORA_설치.exe       ← 설치 앱
-      #   ├── DORA_확장프로그램/  ← Chrome에 로드할 폴더
+      #   ├── DORA_installer.exe    ← 설치 앱
+      #   ├── DORA_확장프로그램/    ← Chrome에 로드할 폴더
       #   └── DORA_설치가이드.txt
       - name: 윈도우 패키지 생성
         run: |
           mkdir -p DORA_윈도우/DORA_확장프로그램
-          cp win-exe/DORA_설치.exe DORA_윈도우/
+          cp win-exe/DORA_installer.exe DORA_윈도우/
           cp manifest.json background.js DORA_윈도우/DORA_확장프로그램/
           cp -r src popup icons DORA_윈도우/DORA_확장프로그램/
           cp DORA_설치가이드.txt DORA_윈도우/
