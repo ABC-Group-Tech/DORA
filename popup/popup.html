@@ -19,11 +19,11 @@
     </label>
   </header>
 
-  <!-- 설정 섹션 -->
+  <!-- 기본 설정 섹션 -->
   <section class="section">
-    <h2 class="section-title">설정</h2>
+    <h2 class="section-title">기본 설정</h2>
     <div class="field">
-      <label class="field-label" for="rootFolderInput">루트 폴더명</label>
+      <label class="field-label" for="rootFolderInput">다운로드 폴더 내 루트명</label>
       <input
         type="text"
         id="rootFolderInput"
@@ -39,6 +39,43 @@
         <span class="toggle-slider"></span>
       </label>
     </div>
+  </section>
+
+  <!-- 저장 경로 설정 섹션 -->
+  <section class="section">
+    <h2 class="section-title">출처별 저장 경로</h2>
+    <p class="section-desc">절대 경로를 입력하면 해당 폴더로 자동 이동합니다.<br>비워두면 다운로드 폴더 내 루트명 아래에 저장됩니다.</p>
+
+    <div class="field">
+      <label class="field-label dest-label dest-nlm">NotebookLM 저장 경로</label>
+      <input
+        type="text"
+        id="destNLM"
+        class="field-input"
+        placeholder="/Users/이름/Documents/NotebookLM"
+      />
+    </div>
+
+    <div class="field">
+      <label class="field-label dest-label dest-cdl">Claude 저장 경로</label>
+      <input
+        type="text"
+        id="destCDL"
+        class="field-input"
+        placeholder="/Users/이름/Documents/Claude"
+      />
+    </div>
+
+    <div class="field">
+      <label class="field-label dest-label dest-gpt">ChatGPT 저장 경로</label>
+      <input
+        type="text"
+        id="destGPT"
+        class="field-input"
+        placeholder="/Users/이름/Documents/ChatGPT"
+      />
+    </div>
+
     <button id="saveBtn" class="btn btn-primary">설정 저장</button>
     <p id="saveMsg" class="save-msg" aria-live="polite"></p>
   </section>
