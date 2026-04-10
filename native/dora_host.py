@@ -50,8 +50,28 @@ def move_file(src: str, dst: str) -> dict:
             final_dst = f'{base} ({counter}){ext}'
             counter += 1
 
-    shutil.move(src, final_dst)
-    return {'success': True, 'dst': final_dst}
+    # 1차: 직접 이동
+    try:
+        shutil.move(src, final_dst)
+        return {'success': True, 'dst': final_dst}
+    except PermissionError:
+        pass  # macOS TCC 권한 없음 → Finder fallback
+
+    # 2차: macOS Finder(osascript) 경유 이동 — Finder는 전체 디스크 접근 권한 보유
+    script = (
+        f'tell application "Finder" to move '
+        f'(POSIX file "{src}") to '
+        f'(POSIX file "{dst_dir}") with replacing'
+    )
+    result = subprocess.run(
+        ['/usr/bin/osascript', '-e', script],
+        capture_output=True, text=True
+    )
+    if result.returncode == 0:
+        actual = os.path.join(dst_dir, os.path.basename(src))
+        return {'success': True, 'dst': actual}
+
+    return {'success': False, 'error': f'파일 이동 실패: {result.stderr.strip()}'}
 
 
 def pick_folder(title: str = '저장 폴더 선택') -> dict:
