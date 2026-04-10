@@ -58,7 +58,11 @@ def move_file(src: str, dst: str) -> dict:
     except PermissionError:
         pass  # macOS TCC 권한 없음 → Finder fallback
 
-    # 2차: macOS Finder(osascript) 경유 이동 — Finder는 전체 디스크 접근 권한 보유
+    # 2차: macOS 전용 — Finder(osascript) 경유 이동
+    # Finder는 전체 디스크 접근 권한을 항상 보유
+    if sys.platform != 'darwin':
+        return {'success': False, 'error': f'파일 이동 실패 (권한 없음): {src}'}
+
     script = (
         f'tell application "Finder" to move '
         f'(POSIX file "{src}") to '

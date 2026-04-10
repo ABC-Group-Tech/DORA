@@ -38,13 +38,17 @@ C_BORDER   = '#e2e8f0'
 
 # ── 설치 로직 ──────────────────────────────────────────────────
 def get_bundled_host_path() -> str:
-    """번들 안의 dora_host.py 위치를 반환한다.
+    """번들 안의 native host 파일 위치를 반환한다.
+    - macOS: dora_host.py (shebang으로 python3 실행)
+    - Windows: dora_host.exe (Python 불필요한 독립 실행 파일)
     PyInstaller는 --add-data 파일을 sys._MEIPASS 디렉터리에 풀어놓는다."""
     if getattr(sys, 'frozen', False):
         base = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
     else:
         base = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base, 'dora_host.py')
+
+    host_file = 'dora_host.exe' if platform.system() == 'Windows' else 'dora_host.py'
+    return os.path.join(base, host_file)
 
 
 def build_manifest(host_path: str, ext_id: str) -> dict:
@@ -96,7 +100,7 @@ def install_windows(ext_id: str) -> str:
     # 영구 위치에 복사 (%APPDATA%\DORA\)
     dora_dir = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'DORA')
     os.makedirs(dora_dir, exist_ok=True)
-    host_path = os.path.join(dora_dir, 'dora_host.py')
+    host_path = os.path.join(dora_dir, 'dora_host.exe')
     shutil.copy2(src, host_path)
 
     # 매니페스트 파일 저장

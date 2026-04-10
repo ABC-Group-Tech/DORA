@@ -63,10 +63,15 @@ jobs:
       - name: PyInstaller 설치
         run: pip install pyinstaller
 
-      - name: 윈도우 exe 빌드
+      - name: dora_host.exe 빌드 (Native Messaging 호스트)
         run: |
           cd native
-          pyinstaller --noconfirm --clean --windowed --onefile --name "DORA_installer" --add-data "dora_host.py;." installer_gui.py
+          pyinstaller --noconfirm --clean --onefile --console --name "dora_host" dora_host.py
+
+      - name: 윈도우 installer exe 빌드
+        run: |
+          cd native
+          pyinstaller --noconfirm --clean --windowed --onefile --name "DORA_installer" --add-data "dist/dora_host.exe;." installer_gui.py
 
       - name: 아티팩트 업로드
         uses: actions/upload-artifact@v4
