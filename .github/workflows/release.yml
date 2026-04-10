@@ -103,26 +103,21 @@ jobs:
       #   └── DORA_설치가이드.txt
       - name: 맥 패키지 생성
         run: |
-          mkdir -p DORA_맥/DORA_확장프로그램
-          unzip mac-app/mac_app.zip -d DORA_맥/
-          cp manifest.json background.js DORA_맥/DORA_확장프로그램/
-          cp -r src popup icons DORA_맥/DORA_확장프로그램/
-          cp DORA_설치가이드.txt DORA_맥/
-          zip -r DORA_맥.zip DORA_맥/
+          mkdir -p DORA_mac/DORA_extension
+          unzip mac-app/mac_app.zip -d DORA_mac/
+          cp manifest.json background.js DORA_mac/DORA_extension/
+          cp -r src popup icons DORA_mac/DORA_extension/
+          cp DORA_설치가이드.txt DORA_mac/
+          zip -r DORA_mac.zip DORA_mac/
 
-      # DORA_윈도우.zip 구성:
-      #   DORA_윈도우/
-      #   ├── DORA_installer.exe    ← 설치 앱
-      #   ├── DORA_확장프로그램/    ← Chrome에 로드할 폴더
-      #   └── DORA_설치가이드.txt
       - name: 윈도우 패키지 생성
         run: |
-          mkdir -p DORA_윈도우/DORA_확장프로그램
-          cp win-exe/DORA_installer.exe DORA_윈도우/
-          cp manifest.json background.js DORA_윈도우/DORA_확장프로그램/
-          cp -r src popup icons DORA_윈도우/DORA_확장프로그램/
-          cp DORA_설치가이드.txt DORA_윈도우/
-          zip -r DORA_윈도우.zip DORA_윈도우/
+          mkdir -p DORA_windows/DORA_extension
+          cp win-exe/DORA_installer.exe DORA_windows/
+          cp manifest.json background.js DORA_windows/DORA_extension/
+          cp -r src popup icons DORA_windows/DORA_extension/
+          cp DORA_설치가이드.txt DORA_windows/
+          zip -r DORA_windows.zip DORA_windows/
 
       - name: GitHub Release 생성 및 파일 첨부
         uses: softprops/action-gh-release@v2
@@ -135,17 +130,17 @@ jobs:
 
             | 파일 | 대상 |
             |------|------|
-            | `DORA_맥.zip` | 맥 사용자 |
-            | `DORA_윈도우.zip` | 윈도우 사용자 |
+            | `DORA_mac.zip` | 맥 사용자 |
+            | `DORA_windows.zip` | 윈도우 사용자 |
+
+            > zip 하나에 설치 앱 + Chrome 확장 파일 + 설치가이드가 모두 포함되어 있습니다.
 
             ### 시작하기
             1. 본인 OS에 맞는 zip 파일 **하나만** 다운로드
             2. 압축 해제 후 `DORA_설치가이드.txt` 확인
             3. 설치 앱 실행 → Extension ID 입력 → 완료
-
-            > zip 안에 Chrome 확장 파일, 설치 앱, 가이드가 모두 포함되어 있습니다.
           files: |
-            DORA_맥.zip
-            DORA_윈도우.zip
+            DORA_mac.zip
+            DORA_windows.zip
           draft: false
           prerelease: false
