@@ -1,0 +1,9 @@
+# PyInstaller 빌드 결과물
+native/dist/
+native/build/
+native/*.spec
+
+# macOS
+.DS_Store
+__pycache__/
+*.pyc
