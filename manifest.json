@@ -5,7 +5,8 @@
   "description": "AI 도구(NotebookLM, Claude, ChatGPT)에서 다운로드된 문서를 자동으로 분류·정리합니다.",
   "permissions": [
     "downloads",
-    "storage"
+    "storage",
+    "nativeMessaging"
   ],
   "background": {
     "service_worker": "background.js",

@@ -149,7 +149,7 @@ function requestPickFolder(title) {
     try {
       port = chrome.runtime.connectNative('com.abc.dora');
     } catch {
-      alert('Native Messaging 호스트가 설치되어 있지 않습니다.\nnative/install_mac.sh 또는 install_win.bat을 먼저 실행해주세요.');
+      alert('DORA 설치 앱을 먼저 실행해주세요.\n(DORA_installer.app 또는 DORA_installer.exe)');
       resolve(null);
       return;
     }
@@ -169,7 +169,7 @@ function requestPickFolder(title) {
     port.onDisconnect.addListener(() => {
       const err = chrome.runtime.lastError;
       if (err) {
-        alert('Native Messaging 호스트와 연결할 수 없습니다.\n설치 스크립트를 실행했는지 확인해주세요.');
+        alert('DORA 설치 앱과 연결할 수 없습니다.\nDORA_installer를 다시 실행하거나 Chrome을 완전히 재시작해주세요.');
         resolve(null);
       }
     });
