@@ -177,9 +177,8 @@ class DoraInstaller(tk.Tk):
             font=('Courier', 11), width=36,
             relief='flat', highlightbackground=C_BORDER,
             highlightthickness=1, highlightcolor=C_PRIMARY,
-            padx=8, pady=6
         )
-        entry.pack(anchor='w', padx=(28, 0))
+        entry.pack(anchor='w', padx=(28, 0), ipadx=8, ipady=6)
         entry.bind('<Return>', lambda e: self._install())
 
         # 설치 버튼
