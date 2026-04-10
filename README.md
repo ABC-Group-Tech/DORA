@@ -8,15 +8,15 @@
 
 Claude, ChatGPT, NotebookLM 등 AI 도구에서 생성된 PDF/PPTX 파일을 다운로드하면 모두 `Downloads` 폴더에 무분별하게 쌓이는 문제가 있다. 출처와 날짜 기준의 수동 정리가 반복적으로 필요한 상황이다.
 
-DORA는 Chrome Extension의 `onDeterminingFilename` API를 활용해 **다운로드 시점에** 출처 URL을 즉시 판별하고, 파일명 변경과 폴더 지정을 한 번에 처리한다.
+DORA는 Chrome Extension의 `onDeterminingFilename` API를 활용해 **다운로드 시점에** 출처 URL을 즉시 판별하고, 파일명 변경과 지정 폴더로의 이동을 자동으로 처리한다.
 
 ---
 
 ## 주요 기능
 
 - 다운로드 시점에 출처 URL(referrer)을 즉시 판별하여 파일명 자동 변경
-- 출처별 지정 폴더로 자동 저장
-- Chrome 확장 설치만으로 동작 — 별도 프로그램 설치 불필요
+- 출처별 지정 폴더로 자동 이동 (Native Messaging 경유)
+- 출처 동적 관리 — 팝업에서 AI 도구 추가 / 수정 / 삭제 가능
 - macOS / Windows 동일 동작
 - 대상 파일 형식: `.pdf`, `.pptx`
 
@@ -41,18 +41,21 @@ DORA는 Chrome Extension의 `onDeterminingFilename` API를 활용해 **다운로
 
 ```
 Downloads/
-└── AI출력물/
-    ├── NotebookLM/
-    │   └── 2026-04/
-    │       └── NLM_20260410_전략플레이북.pdf
+└── AI출력물/          ← 저장 경로 미지정 시 기본 위치
     ├── Claude/
     │   └── 2026-04/
     │       └── CDL_20260410_회사소개서.pptx
     ├── ChatGPT/
     │   └── 2026-04/
     │       └── GPT_20260410_마케팅분석.pdf
-    └── ETC/                          ← 설정으로 처리 여부 제어
+    └── NotebookLM/
         └── 2026-04/
+            └── NLM_20260410_전략플레이북.pdf
+
+[사용자 지정 폴더]     ← 출처별 폴더 지정 시 Downloads 밖으로 이동
+    ├── Claude/        ← DORA 팝업에서 [폴더 선택]으로 지정
+    ├── ChatGPT/
+    └── NotebookLM/
 ```
 
 ---
@@ -69,21 +72,24 @@ Downloads/
 │  │  popup.html   │      │                                  │ │
 │  │  popup.js     │      │   DownloadHandler                │ │
 │  │  popup.css    │      │     onDeterminingFilename()      │ │
-│  └──────┬────────┘      │         │                        │ │
+│  └──────┬────────┘      │     onChanged() → moveFile()     │ │
+│         │               │         │                        │ │
 │         │               │   ReferrerClassifier             │ │
-│         │               │     classifySource(url)          │ │
-│         │               │         │                        │ │
 │         │               │   FilenameBuilder                │ │
-│         │               │     buildFilePath(item, source)  │ │
-│         │               │         │                        │ │
 │         │               │   Logger                         │ │
-│         │               │     saveLog(entry)               │ │
-│         │               └──────────────────────────────────┘ │
-│         │                                                      │
-│         └──────────────► chrome.storage                        │
-│                           ├─ .sync  → 설정 (기기 간 동기화)    │
-│                           └─ .local → 로그 (로컬 전용)         │
-└──────────────────────────────────────────────────────────────┘
+│         │               └──────────┬───────────────────────┘ │
+│         │                          │ chrome.runtime           │
+│         └──────────────►chrome.storage   .connectNative()     │
+│                           sync/local/session                  │
+└──────────────────────────────────┬───────────────────────────┘
+                                   │ Native Messaging (stdio)
+                          ┌────────▼────────┐
+                          │  dora_host      │
+                          │  (.py / .exe)   │
+                          │                 │
+                          │  move_file()    │  shutil.move
+                          │  pick_folder()  │  tkinter dialog
+                          └─────────────────┘
 ```
 
 ---
@@ -99,27 +105,26 @@ chrome.downloads.onDeterminingFilename 이벤트 발생
           ├─ [1] 설정 로드 (chrome.storage.sync)
           │
           ├─ [2] 확장 프로그램 활성화 여부 확인
-          │         └─ 비활성화 → suggest() 기본 동작 유지
           │
           ├─ [3] 파일 확장자 필터 (.pdf / .pptx 만 처리)
-          │         └─ 대상 외 → suggest() 기본 동작 유지
           │
           ├─ [4] referrer URL로 출처 판별
-          │         ├─ notebooklm.google.com → NLM (NotebookLM)
-          │         ├─ claude.ai             → CDL (Claude)
-          │         ├─ chatgpt.com           → GPT (ChatGPT)
+          │         ├─ notebooklm.google.com → NLM
+          │         ├─ claude.ai             → CDL
+          │         ├─ chatgpt.com           → GPT
           │         └─ 미매칭               → ETC
           │
-          ├─ [5] ETC 처리 여부 확인 (설정값)
-          │         └─ processEtc=false → suggest() 기본 동작 유지
+          ├─ [5] 파일 경로 생성 및 suggest() 호출
+          │         └─ "AI출력물/Claude/2026-04/CDL_20260410_파일명.pdf"
           │
-          ├─ [6] 파일 경로 생성
-          │         └─ "AI출력물/NotebookLM/2026-04/NLM_20260410_파일명.pdf"
+          ├─ [6] 목적지 폴더가 설정된 경우 → session storage에 대기 등록
           │
-          ├─ [7] suggest({ filename, conflictAction: 'uniquify' })
-          │         └─ Chrome이 실제 파일 저장
-          │
-          └─ [8] 로그 저장 (chrome.storage.local, 최근 20건 유지)
+          └─ [7] 다운로드 완료 (onChanged state=complete)
+                    │
+                    └─ [8] Native Messaging으로 파일 이동 요청
+                              dora_host → shutil.move (macOS: Finder fallback)
+                              → 지정 폴더로 이동 완료
+                              → 로그 저장 (chrome.storage.local)
 ```
 
 ---
@@ -137,12 +142,21 @@ DORA/
 │   └── logger.js              # 로그 저장 / 조회 모듈
 ├── popup/
 │   ├── popup.html             # 설정 UI 마크업
-│   ├── popup.js               # 설정 저장 및 로그 렌더링 로직
+│   ├── popup.js               # 설정 저장, 출처 CRUD, 로그 렌더링
 │   └── popup.css              # 팝업 스타일
 ├── icons/
 │   ├── icon16.png
 │   ├── icon48.png
 │   └── icon128.png
+├── native/
+│   ├── dora_host.py           # Native Messaging 호스트 (파일 이동 / 폴더 선택)
+│   ├── installer_gui.py       # GUI 설치 앱 (tkinter) — PyInstaller로 빌드
+│   ├── build_installer.sh     # 맥 로컬 빌드 스크립트
+│   └── build_installer.bat    # 윈도우 로컬 빌드 스크립트
+├── DORA_설치가이드.txt
+├── .github/
+│   └── workflows/
+│       └── release.yml        # macOS / Windows 자동 빌드 및 릴리즈
 └── README.md
 ```
 
@@ -153,11 +167,14 @@ DORA/
 | 항목 | 선택 |
 |------|------|
 | 플랫폼 | Chrome Extension (Manifest V3) |
-| 언어 | JavaScript (ES2020+) |
+| 언어 | JavaScript (ES2020+), Python 3.11 |
 | 핵심 API | `chrome.downloads.onDeterminingFilename` |
+| 파일 이동 | Native Messaging (`chrome.runtime.connectNative`) |
 | 설정 저장 | `chrome.storage.sync` |
+| 임시 상태 | `chrome.storage.session` (Service Worker 재시작 대비) |
 | 로그 저장 | `chrome.storage.local` |
 | UI | Extension Popup (HTML / CSS / JS) |
+| 설치 앱 | Python tkinter + PyInstaller |
 | OS 호환 | macOS / Windows |
 
 ---
@@ -175,6 +192,22 @@ DORA/
 }
 ```
 
+### 출처 목록 (chrome.storage.sync)
+
+```js
+// key: 'dora_sources' — 팝업에서 CRUD 관리
+[
+  {
+    id: 'claude',
+    name: 'Claude',
+    urlPattern: 'claude.ai',
+    prefix: 'CDL',
+    destination: '/Users/이름/Documents/Claude'  // 폴더 미지정 시 빈 문자열
+  },
+  ...
+]
+```
+
 ### 로그 (chrome.storage.local)
 
 ```js
@@ -185,9 +218,9 @@ DORA/
     timestamp: "2026-04-10T09:30:00.000Z",
     originalFilename: "Podcast transcript.pdf",
     newFilePath: "AI출력물/NotebookLM/2026-04/NLM_20260410_Podcast transcript.pdf",
-    source: "NOTEBOOKLM",
+    source: "NotebookLM",
     referrer: "https://notebooklm.google.com/...",
-    status: "renamed"        // "renamed" | "skipped" | "error"
+    status: "moved"        // "renamed" | "moved" | "skipped" | "error"
   }
 ]
 ```
@@ -200,6 +233,13 @@ DORA/
 ┌─────────────────────────────┐
 │  DORA              [ON/OFF] │  ← 확장 활성화 토글
 ├─────────────────────────────┤
+│  AI 출처 관리               │
+│  ┌─────────────────────┐   │
+│  │ Claude   CDL  [폴더]│   │  ← 출처 카드 (수정/삭제/폴더선택)
+│  │ ChatGPT  GPT  [폴더]│   │
+│  │ ...               +추가│   │
+│  └─────────────────────┘   │
+├─────────────────────────────┤
 │  설정                       │
 │  루트 폴더: [AI출력물      ]│
 │  ETC 처리:  [  토글  ]      │
@@ -207,8 +247,7 @@ DORA/
 ├─────────────────────────────┤
 │  최근 다운로드 로그         │
 │  ┌─────────────────────┐   │
-│  │ NLM │ 04-10 │ ...  │   │
-│  │ GPT │ 04-09 │ ...  │   │
+│  │ CDL │ 04-10 │ ...  │   │
 │  └─────────────────────┘   │
 │                [로그 초기화]│
 └─────────────────────────────┘
@@ -221,40 +260,20 @@ DORA/
 | 권한 | 용도 |
 |------|------|
 | `downloads` | 다운로드 이벤트 감지 및 파일명 변경 |
-| `storage` | 사용자 설정 및 로그 저장 |
-
----
-
-## 구현 단계
-
-| Phase | 내용 | 목표 |
-|-------|------|------|
-| **Phase 1** | 폴더 구조 + `manifest.json` + `constants.js` | Extension 로드 확인 |
-| **Phase 2** | `classifier.js` + `filenameBuilder.js` + 리스너 연결 | 출처 분류 동작 확인 |
-| **Phase 3** | `background.js` 통합 + `logger.js` | 실제 다운로드 경로 변경 확인 |
-| **Phase 4** | Popup UI (설정 저장 + 로그 뷰어) | 사용자 설정 반영 |
-| **Phase 5** | 예외처리 강화 + 최종 테스트 | 배포 준비 |
-
----
-
-## 범위 외 (Out of Scope)
-
-- Firefox / Safari 지원 — Chrome 전용
-- 인쇄 자동화 — 수동 인쇄 유지
-- 클라우드 동기화 — 로컬 저장만 대상
-- Edge 지원 — Chromium 기반으로 동작 가능하나 별도 테스트 미포함
+| `storage` | 사용자 설정, 출처 목록, 로그 저장 |
+| `nativeMessaging` | Python 호스트와 통신 (파일 이동, 폴더 선택) |
 
 ---
 
 ## 사용자 설치 방법
 
-> 상세 안내는 릴리즈 페이지에서 `DORA_설치가이드.txt`를 함께 다운로드하세요.
+> 상세 안내는 릴리즈 페이지에서 `DORA_설치가이드.txt`를 함께 확인하세요.
 
 ### Step 1. Chrome 확장 로드
 ```
 1. chrome://extensions 접속
 2. 개발자 모드 ON
-3. "압축해제된 확장 프로그램 로드" → DORA 폴더 선택
+3. "압축해제된 확장 프로그램 로드" → DORA_extension 폴더 선택
 4. 카드 하단의 Extension ID (32자리) 복사
 ```
 
@@ -262,12 +281,10 @@ DORA/
 
 | OS | 파일 | 방법 |
 |----|------|------|
-| 맥 | `DORA_맥.zip` | 압축 해제 → `DORA 설치.app` 더블클릭 |
-| 윈도우 | `DORA_윈도우.zip` | 압축 해제 → `DORA_설치.exe` 더블클릭 |
+| 맥 | `DORA_mac.zip` → `DORA_installer.app` | 우클릭 → 열기 (첫 실행 시) |
+| 윈도우 | `DORA_windows.zip` → `DORA_installer.exe` | 추가 정보 → 실행 |
 
-> zip 안에 Chrome 확장 파일, 설치 앱, 가이드가 모두 포함되어 있습니다. 코드를 별도로 받을 필요 없음.
-
-Extension ID 입력 후 [설치 시작] 클릭 → Chrome 완전 재시작
+Extension ID 입력 → [설치 시작] → Chrome 완전 종료(Cmd+Q) 후 재시작
 
 ### Step 3. 저장 폴더 설정
 ```
@@ -298,8 +315,8 @@ git push origin v1.0.0
 
 | 파일 | 내용 |
 |------|------|
-| `DORA_맥.zip` | 맥용 패키지 (설치 앱 + 확장 파일 + 가이드) |
-| `DORA_윈도우.zip` | 윈도우용 패키지 (설치 앱 + 확장 파일 + 가이드) |
+| `DORA_mac.zip` | 맥용 패키지 (DORA_installer.app + DORA_extension + 가이드) |
+| `DORA_windows.zip` | 윈도우용 패키지 (DORA_installer.exe + DORA_extension + 가이드) |
 
 빌드 진행 상황: **https://github.com/ABC-Group-Tech/DORA/actions**
 릴리즈 다운로드: **https://github.com/ABC-Group-Tech/DORA/releases**
