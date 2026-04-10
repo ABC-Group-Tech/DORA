@@ -1,0 +1,9 @@
+{
+  "name": "com.abc.dora",
+  "description": "DORA - 파일 이동 헬퍼",
+  "path": "__DORA_HOST_PATH__",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://__EXTENSION_ID__/"
+  ]
+}
