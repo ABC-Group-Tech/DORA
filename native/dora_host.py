@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
 DORA Native Messaging Host
-Chrome Extension과 통신하여 다운로드된 파일을 지정 폴더로 이동한다.
+Chrome Extension과 통신하여 파일 이동 및 폴더 선택 다이얼로그를 처리한다.
+
+지원 액션:
+  - move:        파일을 src에서 dst로 이동
+  - pick_folder: OS 기본 폴더 선택 창을 열고 선택된 경로를 반환
+  - ping:        연결 상태 확인
 
 프로토콜:
-  - 입력/출력 모두 4바이트(네이티브 바이트 순서) 길이 헤더 + UTF-8 JSON 본문
-  - 요청: { "action": "move", "src": "<원본 경로>", "dst": "<대상 경로>" }
-  - 응답: { "success": true, "dst": "<이동된 경로>" }
-           { "success": false, "error": "<오류 메시지>" }
+  4바이트(네이티브 바이트 순서) 길이 헤더 + UTF-8 JSON 본문
 """
 
 import sys
@@ -18,7 +20,6 @@ import os
 
 
 def read_message() -> dict:
-    """stdin에서 메시지를 읽어 dict로 반환한다."""
     raw_length = sys.stdin.buffer.read(4)
     if len(raw_length) < 4:
         sys.exit(0)
@@ -28,7 +29,6 @@ def read_message() -> dict:
 
 
 def send_message(message: dict) -> None:
-    """dict를 직렬화해 stdout으로 메시지를 전송한다."""
     encoded = json.dumps(message, ensure_ascii=False).encode('utf-8')
     sys.stdout.buffer.write(struct.pack('@I', len(encoded)))
     sys.stdout.buffer.write(encoded)
@@ -36,18 +36,12 @@ def send_message(message: dict) -> None:
 
 
 def move_file(src: str, dst: str) -> dict:
-    """
-    src 파일을 dst 경로로 이동한다.
-    dst 디렉토리가 없으면 자동 생성한다.
-    동일 파일명이 존재하면 (1), (2) suffix를 붙인다.
-    """
     if not os.path.isfile(src):
         return {'success': False, 'error': f'원본 파일을 찾을 수 없습니다: {src}'}
 
     dst_dir = os.path.dirname(dst)
     os.makedirs(dst_dir, exist_ok=True)
 
-    # 파일명 충돌 처리
     final_dst = dst
     if os.path.exists(final_dst):
         base, ext = os.path.splitext(dst)
@@ -58,6 +52,31 @@ def move_file(src: str, dst: str) -> dict:
 
     shutil.move(src, final_dst)
     return {'success': True, 'dst': final_dst}
+
+
+def pick_folder(title: str = '저장 폴더 선택') -> dict:
+    """OS 기본 폴더 선택 창을 열고 선택된 절대 경로를 반환한다."""
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()                      # 메인 윈도우 숨김
+        root.wm_attributes('-topmost', 1)    # 항상 최상단 표시
+
+        folder = filedialog.askdirectory(
+            title=title,
+            parent=root
+        )
+        root.destroy()
+
+        if folder:
+            return {'success': True, 'path': folder}
+        else:
+            return {'success': False, 'error': 'cancelled'}
+
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
 
 
 def main():
@@ -72,13 +91,14 @@ def main():
         if action == 'move':
             src = message.get('src', '')
             dst = message.get('dst', '')
-
             if not src or not dst:
                 send_message({'success': False, 'error': 'src 또는 dst가 비어있습니다.'})
-                continue
+            else:
+                send_message(move_file(src, dst))
 
-            result = move_file(src, dst)
-            send_message(result)
+        elif action == 'pick_folder':
+            title = message.get('title', '저장 폴더 선택')
+            send_message(pick_folder(title))
 
         elif action == 'ping':
             send_message({'success': True, 'message': 'pong'})
