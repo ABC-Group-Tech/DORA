@@ -4,9 +4,7 @@ import { buildFilePath } from './src/filenameBuilder.js';
 import { saveLog } from './src/logger.js';
 
 const NATIVE_HOST = 'com.abc.dora';
-
-// 다운로드 ID → 이동 대기 정보 임시 저장
-const pendingMap = new Map();
+const PENDING_KEY = 'dora_pending'; // session storage 키
 
 // ── 설정 로드 ──────────────────────────────────────────────────
 async function getSettings() {
@@ -28,10 +26,32 @@ async function getSources() {
   }
 }
 
+// ── session storage: pendingMap 대체 (SW 재시작 대비) ──────────
+async function setPending(downloadId, data) {
+  const result = await chrome.storage.session.get(PENDING_KEY);
+  const map = result[PENDING_KEY] ?? {};
+  map[downloadId] = data;
+  await chrome.storage.session.set({ [PENDING_KEY]: map });
+}
+
+async function getPending(downloadId) {
+  const result = await chrome.storage.session.get(PENDING_KEY);
+  return (result[PENDING_KEY] ?? {})[downloadId] ?? null;
+}
+
+async function deletePending(downloadId) {
+  const result = await chrome.storage.session.get(PENDING_KEY);
+  const map = result[PENDING_KEY] ?? {};
+  delete map[downloadId];
+  await chrome.storage.session.set({ [PENDING_KEY]: map });
+}
+
 // ── Native Messaging: 파일 이동 요청 ───────────────────────────
 function moveFile(src, dst) {
   return new Promise((resolve, reject) => {
     let port;
+    let responded = false;
+
     try {
       port = chrome.runtime.connectNative(NATIVE_HOST);
     } catch (err) {
@@ -40,6 +60,7 @@ function moveFile(src, dst) {
     }
 
     port.onMessage.addListener((response) => {
+      responded = true;
       port.disconnect();
       if (response.success) {
         resolve(response.dst);
@@ -49,6 +70,7 @@ function moveFile(src, dst) {
     });
 
     port.onDisconnect.addListener(() => {
+      if (responded) return;
       const err = chrome.runtime.lastError;
       if (err) reject(new Error(`Native Host 연결 끊김: ${err.message}`));
     });
@@ -93,7 +115,7 @@ async function handleDeterminingFilename(downloadItem, suggest) {
     if (destination !== '') {
       const filename = newFilePath.split('/').pop();
       const targetPath = `${destination.replace(/[/\\]$/, '')}/${filename}`;
-      pendingMap.set(downloadItem.id, {
+      await setPending(downloadItem.id, {
         newFilePath, targetPath,
         sourceId: source.id, sourceName: source.name,
         referrer: downloadItem.referrer ?? ''
@@ -123,10 +145,10 @@ async function handleDeterminingFilename(downloadItem, suggest) {
 async function handleDownloadChanged(delta) {
   if (delta.state?.current !== 'complete') return;
 
-  const pending = pendingMap.get(delta.id);
+  const pending = await getPending(delta.id);
   if (!pending) return;
 
-  pendingMap.delete(delta.id);
+  await deletePending(delta.id);
 
   const [downloadItem] = await chrome.downloads.search({ id: delta.id });
   if (!downloadItem) return;

@@ -93,23 +93,30 @@ def main():
 
         action = message.get('action')
 
-        if action == 'move':
-            src = message.get('src', '')
-            dst = message.get('dst', '')
-            if not src or not dst:
-                send_message({'success': False, 'error': 'src 또는 dst가 비어있습니다.'})
+        try:
+            if action == 'move':
+                src = message.get('src', '')
+                dst = message.get('dst', '')
+                if not src or not dst:
+                    send_message({'success': False, 'error': 'src 또는 dst가 비어있습니다.'})
+                else:
+                    send_message(move_file(src, dst))
+
+            elif action == 'pick_folder':
+                title = message.get('title', '저장 폴더 선택')
+                send_message(pick_folder(title))
+
+            elif action == 'ping':
+                send_message({'success': True, 'message': 'pong'})
+
             else:
-                send_message(move_file(src, dst))
+                send_message({'success': False, 'error': f'알 수 없는 action: {action}'})
 
-        elif action == 'pick_folder':
-            title = message.get('title', '저장 폴더 선택')
-            send_message(pick_folder(title))
-
-        elif action == 'ping':
-            send_message({'success': True, 'message': 'pong'})
-
-        else:
-            send_message({'success': False, 'error': f'알 수 없는 action: {action}'})
+        except Exception as e:
+            try:
+                send_message({'success': False, 'error': f'호스트 오류: {e}'})
+            except Exception:
+                pass
 
 
 if __name__ == '__main__':
