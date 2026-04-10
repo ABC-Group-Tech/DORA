@@ -88,6 +88,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: 코드 체크아웃 (설치가이드 txt 포함)
+        uses: actions/checkout@v4
+
       - name: macOS 아티팩트 다운로드
         uses: actions/download-artifact@v4
         with:
@@ -100,6 +103,9 @@ jobs:
           name: windows-installer
           path: ./artifacts
 
+      - name: 설치가이드 복사
+        run: cp DORA_설치가이드.txt ./artifacts/DORA_설치가이드.txt
+
       - name: GitHub Release 생성 및 파일 첨부
         uses: softprops/action-gh-release@v2
         with:
@@ -107,20 +113,24 @@ jobs:
           body: |
             ## DORA ${{ github.ref_name }} 릴리즈
 
-            ### 설치 방법
-            1. 아래 파일 중 본인 OS에 맞는 파일을 다운로드하세요.
-            2. 파일을 더블클릭하면 설치 화면이 열립니다.
-            3. Extension ID를 입력하고 [설치 시작]을 클릭하세요.
+            ### 다운로드
 
-            | OS | 파일 |
-            |----|------|
-            | macOS | `DORA_설치_mac.zip` → 압축 해제 후 `.app` 실행 |
-            | Windows | `DORA_설치.exe` 직접 실행 |
+            | 파일 | 설명 |
+            |------|------|
+            | `DORA_설치_mac.zip` | macOS 설치 앱 |
+            | `DORA_설치.exe` | Windows 설치 실행 파일 |
+            | `DORA_설치가이드.txt` | 설치 및 사용 방법 안내 |
 
-            ### Chrome 확장 로드 방법
-            `chrome://extensions` → 개발자 모드 ON → 압축해제된 확장 프로그램 로드 → DORA 폴더 선택
+            > **설치 전에 `DORA_설치가이드.txt`를 먼저 읽어주세요.**
+
+            ### 빠른 시작
+            1. `DORA_설치가이드.txt` 다운로드 후 내용 확인
+            2. OS에 맞는 설치 파일 다운로드 후 더블클릭
+            3. `chrome://extensions`에서 확인한 Extension ID 입력
+            4. [설치 시작] 클릭 → Chrome 재시작
           files: |
             ./artifacts/DORA_설치_mac.zip
             ./artifacts/DORA_설치.exe
+            ./artifacts/DORA_설치가이드.txt
           draft: false
           prerelease: false

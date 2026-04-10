@@ -246,17 +246,79 @@ DORA/
 
 ---
 
-## Chrome 확장 설치 방법 (개발 버전)
+## 사용자 설치 방법
 
-1. 이 레포지터리를 클론
-   ```bash
-   git clone https://github.com/ABC-Group-Tech/DORA.git
-   ```
-2. Chrome 브라우저에서 `chrome://extensions` 접속
-3. 우측 상단 **개발자 모드** 활성화
-4. **압축해제된 확장 프로그램을 로드합니다** 클릭
-5. 클론한 `DORA/` 폴더 선택
-6. 확장 프로그램 아이콘이 Chrome 툴바에 표시되면 설치 완료
+> 상세 안내는 릴리즈 페이지에서 `DORA_설치가이드.txt`를 함께 다운로드하세요.
+
+### Step 1. Chrome 확장 로드
+```
+1. chrome://extensions 접속
+2. 개발자 모드 ON
+3. "압축해제된 확장 프로그램 로드" → DORA 폴더 선택
+4. 카드 하단의 Extension ID (32자리) 복사
+```
+
+### Step 2. 설치 프로그램 실행
+
+| OS | 파일 | 방법 |
+|----|------|------|
+| macOS | `DORA_설치_mac.zip` | 압축 해제 → `.app` 더블클릭 |
+| Windows | `DORA_설치.exe` | 더블클릭 |
+
+Extension ID 입력 후 [설치 시작] 클릭 → Chrome 완전 재시작
+
+### Step 3. 저장 폴더 설정
+```
+툴바 DORA 아이콘 클릭
+→ [AI 출처 관리] 섹션
+→ 각 출처 카드의 [폴더 선택]으로 저장 위치 지정
+→ 새 AI 도구 추가 시 [+ 추가] 버튼
+```
+
+---
+
+## 배포 방법 (개발자용)
+
+### 릴리즈 배포 절차
+
+태그를 푸시하면 GitHub Actions가 자동으로 macOS/Windows 빌드 후 Release를 생성합니다.
+
+```bash
+# 1. 코드 변경 후 main에 커밋/푸시
+git push origin main
+
+# 2. 버전 태그 생성 및 푸시 → 빌드 자동 시작
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+### 빌드 결과물 (자동 생성)
+
+| 파일 | 내용 |
+|------|------|
+| `DORA_설치_mac.zip` | macOS 설치 앱 (.app 번들) |
+| `DORA_설치.exe` | Windows 설치 실행 파일 |
+| `DORA_설치가이드.txt` | 설치 및 사용 방법 안내 |
+
+빌드 진행 상황: **https://github.com/ABC-Group-Tech/DORA/actions**
+릴리즈 다운로드: **https://github.com/ABC-Group-Tech/DORA/releases**
+
+### 버전 관리 규칙
+
+```
+v1.0.0  최초 릴리즈
+v1.1.0  기능 추가
+v1.0.1  버그 수정
+```
+
+---
+
+## 범위 외 (Out of Scope)
+
+- Firefox / Safari 지원 — Chrome 전용
+- 인쇄 자동화 — 수동 인쇄 유지
+- 클라우드 동기화 — 로컬 저장만 대상
+- Edge 지원 — Chromium 기반으로 동작 가능하나 별도 테스트 미포함
 
 ---
 
