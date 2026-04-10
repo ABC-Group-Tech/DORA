@@ -107,6 +107,11 @@ class DoraInstaller(tk.Tk):
         self.resizable(False, False)
         self._build_ui()
         self._center()
+        # macOS .app 번들에서 실행 시 창이 뒤에 숨는 문제 방지
+        self.lift()
+        self.focus_force()
+        self.attributes('-topmost', True)
+        self.after(300, lambda: self.attributes('-topmost', False))
 
     def _center(self):
         self.update_idletasks()

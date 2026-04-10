@@ -33,6 +33,10 @@ jobs:
             --onedir \
             --name "DORA_installer" \
             --add-data "dora_host.py:." \
+            --hidden-import tkinter \
+            --hidden-import tkinter.ttk \
+            --hidden-import tkinter.filedialog \
+            --collect-all tkinter \
             installer_gui.py
 
       - name: .app zip 압축
