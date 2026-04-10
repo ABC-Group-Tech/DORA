@@ -11,8 +11,18 @@ import json
 import stat
 import platform
 import subprocess
-import tkinter as tk
-from tkinter import font as tkfont
+import traceback
+
+# tkinter 로드 실패 시 에러 로그를 Desktop에 남기고 종료
+try:
+    import tkinter as tk
+    from tkinter import font as tkfont
+except Exception:
+    _log = os.path.expanduser('~/Desktop/DORA_error.log')
+    with open(_log, 'w', encoding='utf-8') as _f:
+        _f.write('tkinter 로드 실패:\n')
+        _f.write(traceback.format_exc())
+    sys.exit(1)
 
 
 # ── 색상 & 스타일 상수 ─────────────────────────────────────────
@@ -240,8 +250,14 @@ class DoraInstaller(tk.Tk):
 
 
 def main():
-    app = DoraInstaller()
-    app.mainloop()
+    try:
+        app = DoraInstaller()
+        app.mainloop()
+    except Exception:
+        import traceback
+        log_path = os.path.expanduser('~/Desktop/DORA_error.log')
+        with open(log_path, 'w', encoding='utf-8') as f:
+            f.write(traceback.format_exc())
 
 
 if __name__ == '__main__':

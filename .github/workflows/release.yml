@@ -15,27 +15,24 @@ jobs:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
 
-      - name: Python 설정
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Python + Tcl/Tk 설치 (tkinter 포함 빌드)
+        run: |
+          brew install python-tk@3.11
+          python3.11 -c "import tkinter; print('tkinter OK:', tkinter.TkVersion)"
 
       - name: PyInstaller 설치
-        run: pip install pyinstaller
+        run: python3.11 -m pip install pyinstaller
 
       - name: 맥 앱 빌드
         run: |
           cd native
-          pyinstaller \
+          python3.11 -m PyInstaller \
             --noconfirm \
             --clean \
             --windowed \
             --onedir \
             --name "DORA_installer" \
             --add-data "dora_host.py:." \
-            --hidden-import tkinter \
-            --hidden-import tkinter.ttk \
-            --hidden-import tkinter.filedialog \
             --collect-all tkinter \
             installer_gui.py
 
