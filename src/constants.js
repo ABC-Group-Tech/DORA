@@ -1,39 +1,27 @@
-// 출처별 메타 정보 및 URL 패턴 정의
-export const SOURCES = {
-  NOTEBOOKLM: {
-    id: 'NOTEBOOKLM',
-    prefix: 'NLM',
-    folderName: 'NotebookLM',
-    patterns: [
-      /notebooklm\.google\.com/i,
-      /notebook\.new/i
-    ]
-  },
-  CLAUDE: {
-    id: 'CLAUDE',
+// 기본 제공 AI 출처 목록 (사용자가 팝업에서 추가/수정/삭제 가능)
+export const DEFAULT_SOURCES = [
+  {
+    id: 'claude',
+    name: 'Claude',
+    urlPattern: 'claude.ai',
     prefix: 'CDL',
-    folderName: 'Claude',
-    patterns: [
-      /claude\.ai/i,
-      /anthropic\.com/i
-    ]
+    destination: ''
   },
-  CHATGPT: {
-    id: 'CHATGPT',
+  {
+    id: 'chatgpt',
+    name: 'ChatGPT',
+    urlPattern: 'chatgpt.com',
     prefix: 'GPT',
-    folderName: 'ChatGPT',
-    patterns: [
-      /chatgpt\.com/i,
-      /chat\.openai\.com/i
-    ]
+    destination: ''
   },
-  ETC: {
-    id: 'ETC',
-    prefix: 'ETC',
-    folderName: 'ETC',
-    patterns: []
+  {
+    id: 'notebooklm',
+    name: 'NotebookLM',
+    urlPattern: 'notebooklm.google.com',
+    prefix: 'NLM',
+    destination: ''
   }
-};
+];
 
 // 처리 대상 파일 확장자
 export const ALLOWED_EXTENSIONS = ['.pdf', '.pptx'];
@@ -42,21 +30,14 @@ export const ALLOWED_EXTENSIONS = ['.pdf', '.pptx'];
 export const DEFAULT_SETTINGS = {
   rootFolder: 'AI출력물',
   processEtc: false,
-  enabled: true,
-  // 출처별 저장 경로 (절대 경로). 비어있으면 Downloads 하위 폴더 구조 사용
-  destinations: {
-    NOTEBOOKLM: '',
-    CLAUDE: '',
-    CHATGPT: '',
-    ETC: ''
-  }
+  enabled: true
 };
 
 // storage 키
 export const STORAGE_KEYS = {
   SETTINGS: 'dora_settings',
   LOGS: 'dora_logs',
-  PENDING: 'dora_pending'  // 다운로드 중인 항목 임시 저장 (session storage)
+  SOURCES: 'dora_sources'
 };
 
 // 로그 최대 보관 건수
