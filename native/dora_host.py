@@ -61,8 +61,13 @@ def pick_folder(title: str = '저장 폴더 선택') -> dict:
         from tkinter import filedialog
 
         root = tk.Tk()
-        root.withdraw()                      # 메인 윈도우 숨김
-        root.wm_attributes('-topmost', 1)    # 항상 최상단 표시
+        # 다이얼로그가 화면 중앙에 뜨도록 루트를 중앙에 먼저 배치 후 숨김
+        sw = root.winfo_screenwidth()
+        sh = root.winfo_screenheight()
+        root.geometry(f'1x1+{sw // 2}+{sh // 2}')
+        root.update_idletasks()
+        root.withdraw()
+        root.wm_attributes('-topmost', 1)
 
         folder = filedialog.askdirectory(
             title=title,
