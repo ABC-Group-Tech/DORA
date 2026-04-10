@@ -17,6 +17,7 @@ import json
 import struct
 import shutil
 import os
+import subprocess
 
 
 def read_message() -> dict:
