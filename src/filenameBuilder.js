@@ -59,7 +59,7 @@ export function buildFilePath(downloadItem, source, rootFolder) {
   const safeRoot = sanitize(rootFolder);
 
   const newFilename = `${source.prefix}_${fileDate}_${safeBase}${ext}`;
-  const folderPath = `${safeRoot}/${source.folderName}/${folderDate}`;
+  const folderPath = `${safeRoot}/${source.name}/${folderDate}`;
 
   return `${folderPath}/${newFilename}`;
 }
