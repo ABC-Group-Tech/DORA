@@ -262,8 +262,10 @@ DORA/
 
 | OS | 파일 | 방법 |
 |----|------|------|
-| macOS | `DORA_설치_mac.zip` | 압축 해제 → `.app` 더블클릭 |
-| Windows | `DORA_설치.exe` | 더블클릭 |
+| 맥 | `DORA_맥.zip` | 압축 해제 → `DORA 설치.app` 더블클릭 |
+| 윈도우 | `DORA_윈도우.zip` | 압축 해제 → `DORA_설치.exe` 더블클릭 |
+
+> zip 안에 Chrome 확장 파일, 설치 앱, 가이드가 모두 포함되어 있습니다. 코드를 별도로 받을 필요 없음.
 
 Extension ID 입력 후 [설치 시작] 클릭 → Chrome 완전 재시작
 
@@ -296,9 +298,8 @@ git push origin v1.0.0
 
 | 파일 | 내용 |
 |------|------|
-| `DORA_설치_mac.zip` | macOS 설치 앱 (.app 번들) |
-| `DORA_설치.exe` | Windows 설치 실행 파일 |
-| `DORA_설치가이드.txt` | 설치 및 사용 방법 안내 |
+| `DORA_맥.zip` | 맥용 패키지 (설치 앱 + 확장 파일 + 가이드) |
+| `DORA_윈도우.zip` | 윈도우용 패키지 (설치 앱 + 확장 파일 + 가이드) |
 
 빌드 진행 상황: **https://github.com/ABC-Group-Tech/DORA/actions**
 릴리즈 다운로드: **https://github.com/ABC-Group-Tech/DORA/releases**

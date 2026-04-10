@@ -7,9 +7,9 @@ on:
       - 'v*'
 
 jobs:
-  # ── macOS 빌드 ──────────────────────────────────────────────
+  # ── 맥 빌드 ────────────────────────────────────────────────
   build-macos:
-    name: Build macOS
+    name: Build 맥
     runs-on: macos-latest
     steps:
       - name: 코드 체크아웃
@@ -23,7 +23,7 @@ jobs:
       - name: PyInstaller 설치
         run: pip install pyinstaller
 
-      - name: macOS 앱 빌드
+      - name: 맥 앱 빌드
         run: |
           cd native
           pyinstaller \
@@ -35,20 +35,15 @@ jobs:
             --add-data "dora_host.py:." \
             installer_gui.py
 
-      - name: .app 압축 (zip)
-        run: |
-          cd native/dist
-          zip -r "DORA_설치_mac.zip" "DORA 설치.app"
-
       - name: 아티팩트 업로드
         uses: actions/upload-artifact@v4
         with:
-          name: mac-installer
-          path: native/dist/DORA_설치_mac.zip
+          name: mac-app
+          path: native/dist/DORA 설치.app
 
-  # ── Windows 빌드 ────────────────────────────────────────────
+  # ── 윈도우 빌드 ─────────────────────────────────────────────
   build-windows:
-    name: Build Windows
+    name: Build 윈도우
     runs-on: windows-latest
     steps:
       - name: 코드 체크아웃
@@ -62,7 +57,7 @@ jobs:
       - name: PyInstaller 설치
         run: pip install pyinstaller
 
-      - name: Windows exe 빌드
+      - name: 윈도우 exe 빌드
         run: |
           cd native
           pyinstaller `
@@ -77,7 +72,7 @@ jobs:
       - name: 아티팩트 업로드
         uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
+          name: windows-exe
           path: native/dist/DORA_설치.exe
 
   # ── GitHub Release 생성 ─────────────────────────────────────
@@ -88,49 +83,71 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: 코드 체크아웃 (설치가이드 txt 포함)
+      - name: 코드 체크아웃 (확장 파일 + 가이드 포함)
         uses: actions/checkout@v4
 
-      - name: macOS 아티팩트 다운로드
+      - name: 맥 앱 다운로드
         uses: actions/download-artifact@v4
         with:
-          name: mac-installer
-          path: ./artifacts
+          name: mac-app
+          path: ./mac-app
 
-      - name: Windows 아티팩트 다운로드
+      - name: 윈도우 exe 다운로드
         uses: actions/download-artifact@v4
         with:
-          name: windows-installer
-          path: ./artifacts
+          name: windows-exe
+          path: ./win-exe
 
-      - name: 설치가이드 복사
-        run: cp DORA_설치가이드.txt ./artifacts/DORA_설치가이드.txt
+      # DORA_맥.zip 구성:
+      #   DORA_맥/
+      #   ├── DORA 설치.app      ← 설치 앱
+      #   ├── DORA_확장프로그램/  ← Chrome에 로드할 폴더
+      #   └── DORA_설치가이드.txt
+      - name: 맥 패키지 생성
+        run: |
+          mkdir -p DORA_맥/DORA_확장프로그램
+          cp -r mac-app/DORA\ 설치.app DORA_맥/
+          cp manifest.json background.js DORA_맥/DORA_확장프로그램/
+          cp -r src popup icons DORA_맥/DORA_확장프로그램/
+          cp DORA_설치가이드.txt DORA_맥/
+          zip -r DORA_맥.zip DORA_맥/
+
+      # DORA_윈도우.zip 구성:
+      #   DORA_윈도우/
+      #   ├── DORA_설치.exe       ← 설치 앱
+      #   ├── DORA_확장프로그램/  ← Chrome에 로드할 폴더
+      #   └── DORA_설치가이드.txt
+      - name: 윈도우 패키지 생성
+        run: |
+          mkdir -p DORA_윈도우/DORA_확장프로그램
+          cp win-exe/DORA_설치.exe DORA_윈도우/
+          cp manifest.json background.js DORA_윈도우/DORA_확장프로그램/
+          cp -r src popup icons DORA_윈도우/DORA_확장프로그램/
+          cp DORA_설치가이드.txt DORA_윈도우/
+          zip -r DORA_윈도우.zip DORA_윈도우/
 
       - name: GitHub Release 생성 및 파일 첨부
         uses: softprops/action-gh-release@v2
         with:
           name: "DORA ${{ github.ref_name }}"
           body: |
-            ## DORA ${{ github.ref_name }} 릴리즈
+            ## DORA ${{ github.ref_name }}
 
             ### 다운로드
 
-            | 파일 | 설명 |
+            | 파일 | 대상 |
             |------|------|
-            | `DORA_설치_mac.zip` | macOS 설치 앱 |
-            | `DORA_설치.exe` | Windows 설치 실행 파일 |
-            | `DORA_설치가이드.txt` | 설치 및 사용 방법 안내 |
+            | `DORA_맥.zip` | 맥 사용자 |
+            | `DORA_윈도우.zip` | 윈도우 사용자 |
 
-            > **설치 전에 `DORA_설치가이드.txt`를 먼저 읽어주세요.**
+            ### 시작하기
+            1. 본인 OS에 맞는 zip 파일 **하나만** 다운로드
+            2. 압축 해제 후 `DORA_설치가이드.txt` 확인
+            3. 설치 앱 실행 → Extension ID 입력 → 완료
 
-            ### 빠른 시작
-            1. `DORA_설치가이드.txt` 다운로드 후 내용 확인
-            2. OS에 맞는 설치 파일 다운로드 후 더블클릭
-            3. `chrome://extensions`에서 확인한 Extension ID 입력
-            4. [설치 시작] 클릭 → Chrome 재시작
+            > zip 안에 Chrome 확장 파일, 설치 앱, 가이드가 모두 포함되어 있습니다.
           files: |
-            ./artifacts/DORA_설치_mac.zip
-            ./artifacts/DORA_설치.exe
-            ./artifacts/DORA_설치가이드.txt
+            DORA_맥.zip
+            DORA_윈도우.zip
           draft: false
           prerelease: false
