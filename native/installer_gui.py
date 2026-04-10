@@ -37,11 +37,11 @@ C_BORDER   = '#e2e8f0'
 
 
 # ── 설치 로직 ──────────────────────────────────────────────────
-def get_host_path() -> str:
-    """dora_host.py의 절대 경로를 반환한다."""
+def get_bundled_host_path() -> str:
+    """번들 안의 dora_host.py 위치를 반환한다.
+    PyInstaller는 --add-data 파일을 sys._MEIPASS 디렉터리에 풀어놓는다."""
     if getattr(sys, 'frozen', False):
-        # PyInstaller로 빌드된 경우 — 실행 파일 옆에 위치
-        base = os.path.dirname(sys.executable)
+        base = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
     else:
         base = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base, 'dora_host.py')
@@ -58,9 +58,17 @@ def build_manifest(host_path: str, ext_id: str) -> dict:
 
 
 def install_mac(ext_id: str) -> str:
-    host_path = get_host_path()
-    if not os.path.isfile(host_path):
-        raise FileNotFoundError(f"dora_host.py를 찾을 수 없습니다:\n{host_path}")
+    import shutil
+
+    src = get_bundled_host_path()
+    if not os.path.isfile(src):
+        raise FileNotFoundError(f"번들에서 dora_host.py를 찾을 수 없습니다:\n{src}")
+
+    # 앱을 삭제해도 유지되도록 영구 위치에 복사
+    dora_dir = os.path.expanduser('~/.dora')
+    os.makedirs(dora_dir, exist_ok=True)
+    host_path = os.path.join(dora_dir, 'dora_host.py')
+    shutil.copy2(src, host_path)
 
     # 실행 권한 부여
     os.chmod(host_path, os.stat(host_path).st_mode | stat.S_IXUSR | stat.S_IXGRP)
@@ -78,15 +86,21 @@ def install_mac(ext_id: str) -> str:
 
 
 def install_windows(ext_id: str) -> str:
+    import shutil
     import winreg  # Windows 전용
 
-    host_path = get_host_path()
-    if not os.path.isfile(host_path):
-        raise FileNotFoundError(f"dora_host.py를 찾을 수 없습니다:\n{host_path}")
+    src = get_bundled_host_path()
+    if not os.path.isfile(src):
+        raise FileNotFoundError(f"번들에서 dora_host.py를 찾을 수 없습니다:\n{src}")
+
+    # 영구 위치에 복사 (%APPDATA%\DORA\)
+    dora_dir = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'DORA')
+    os.makedirs(dora_dir, exist_ok=True)
+    host_path = os.path.join(dora_dir, 'dora_host.py')
+    shutil.copy2(src, host_path)
 
     # 매니페스트 파일 저장
-    base = os.path.dirname(host_path)
-    manifest_path = os.path.join(base, 'com.abc.dora.win.json')
+    manifest_path = os.path.join(dora_dir, 'com.abc.dora.json')
     with open(manifest_path, 'w', encoding='utf-8') as f:
         json.dump(build_manifest(host_path, ext_id), f, indent=2, ensure_ascii=False)
 
