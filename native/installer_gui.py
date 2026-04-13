@@ -240,12 +240,40 @@ class DoraInstaller(tk.Tk):
         try:
             manifest_path = run_install()
             self._show_result(
-                f'✅ 설치 완료!\n\nChrome을 완전히 종료한 뒤 다시 실행하면\nDORA가 정상 동작합니다.\n\n'
-                f'매니페스트 경로:\n{manifest_path}',
+                f'✅ 설치 완료!\n\n매니페스트 경로:\n{manifest_path}',
                 error=False
             )
+            self._ask_chrome_restart()
         except Exception as e:
             self._show_result(f'❌ 설치 실패\n\n{e}', error=True)
+
+    def _ask_chrome_restart(self):
+        from tkinter import messagebox
+        answer = messagebox.askyesno(
+            'Chrome 재시작',
+            'Chrome을 완전히 종료한 뒤 재시작해야 DORA가 적용됩니다.\n\n'
+            '지금 Chrome을 재시작하시겠습니까?'
+        )
+        if answer:
+            self._restart_chrome()
+
+    def _restart_chrome(self):
+        import time
+        os_name = platform.system()
+        try:
+            if os_name == 'Darwin':
+                subprocess.run(['pkill', '-a', 'Google Chrome'], check=False)
+                time.sleep(1.5)
+                subprocess.run(['open', '-a', 'Google Chrome'], check=False)
+            elif os_name == 'Windows':
+                subprocess.run(['taskkill', '/F', '/IM', 'chrome.exe'],
+                               shell=True, check=False)
+                time.sleep(1.5)
+                subprocess.run(['start', 'chrome'], shell=True, check=False)
+        except Exception as e:
+            from tkinter import messagebox
+            messagebox.showwarning('Chrome 재시작 실패',
+                                   f'Chrome을 자동으로 재시작하지 못했습니다.\n직접 재시작해주세요.\n\n{e}')
 
     def _show_result(self, msg, error=False):
         self.result_var.set(msg)

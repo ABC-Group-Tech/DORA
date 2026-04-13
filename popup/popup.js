@@ -27,6 +27,7 @@ const logList          = document.getElementById('logList');
 
 let sources   = [];
 let editingId = null; // 수정 중인 소스 id (null이면 신규 추가)
+let isPicking = false; // 폴더 선택 창 중복 방지 플래그
 
 // ── 초기화 ───────────────────────────────────────────────────
 async function init() {
@@ -144,25 +145,34 @@ async function pickFolderForSource(id) {
 
 // ── Native Messaging으로 폴더 선택 창 요청 ───────────────────
 function requestPickFolder(title) {
+  if (isPicking) {
+    alert('폴더 선택 창이 이미 열려 있습니다.\n선택을 완료하거나 취소한 뒤 다시 시도하세요.');
+    return Promise.resolve(null);
+  }
+
+  isPicking = true;
+
   return new Promise((resolve) => {
+    const done = (value) => { isPicking = false; resolve(value); };
+
     let port;
     try {
       port = chrome.runtime.connectNative('com.abc.dora');
     } catch {
       alert('DORA 설치 앱을 먼저 실행해주세요.\n(DORA_installer.app 또는 DORA_installer.exe)');
-      resolve(null);
+      done(null);
       return;
     }
 
     port.onMessage.addListener((response) => {
       port.disconnect();
       if (response.success) {
-        resolve(response.path);
+        done(response.path);
       } else if (response.error === 'cancelled') {
-        resolve(null);
+        done(null);
       } else {
         alert(`폴더 선택 오류: ${response.error}`);
-        resolve(null);
+        done(null);
       }
     });
 
@@ -170,7 +180,7 @@ function requestPickFolder(title) {
       const err = chrome.runtime.lastError;
       if (err) {
         alert('DORA 설치 앱과 연결할 수 없습니다.\nDORA_installer를 다시 실행하거나 Chrome을 완전히 재시작해주세요.');
-        resolve(null);
+        done(null);
       }
     });
 
