@@ -1,6 +1,6 @@
 import { ALLOWED_EXTENSIONS, DEFAULT_SETTINGS, DEFAULT_SOURCES, STORAGE_KEYS } from './src/constants.js';
 import { classifySource } from './src/classifier.js';
-import { buildFilePath } from './src/filenameBuilder.js';
+import { buildFilename } from './src/filenameBuilder.js';
 import { saveLog } from './src/logger.js';
 
 const NATIVE_HOST = 'com.abc.dora';
@@ -98,10 +98,10 @@ async function handleDeterminingFilename(downloadItem, suggest) {
     // ETC로 처리
     const etcSource = { id: 'ETC', name: 'ETC', prefix: 'ETC', destination: '' };
     try {
-      const newFilePath = buildFilePath(downloadItem, etcSource, settings.rootFolder);
-      suggest({ filename: newFilePath, conflictAction: 'uniquify' });
+      const newFilename = buildFilename(downloadItem, etcSource);
+      suggest({ filename: newFilename, conflictAction: 'uniquify' });
       saveLog({ id: downloadItem.id, timestamp: new Date().toISOString(),
-        originalFilename: downloadItem.filename, newFilePath,
+        originalFilename: downloadItem.filename, newFilePath: newFilename,
         source: 'ETC', referrer: downloadItem.referrer ?? '', status: 'renamed'
       }).catch(console.error);
     } catch { suggest(); }
@@ -109,24 +109,23 @@ async function handleDeterminingFilename(downloadItem, suggest) {
   }
 
   try {
-    const newFilePath = buildFilePath(downloadItem, source, settings.rootFolder);
+    const newFilename = buildFilename(downloadItem, source);
     const destination = (source.destination ?? '').trim();
 
     if (destination !== '') {
-      const filename = newFilePath.split('/').pop();
-      const targetPath = `${destination.replace(/[/\\]$/, '')}/${filename}`;
+      const targetPath = `${destination.replace(/[/\\]$/, '')}/${newFilename}`;
       await setPending(downloadItem.id, {
-        newFilePath, targetPath,
+        newFilePath: newFilename, targetPath,
         sourceId: source.id, sourceName: source.name,
         referrer: downloadItem.referrer ?? ''
       });
     }
 
-    suggest({ filename: newFilePath, conflictAction: 'uniquify' });
+    suggest({ filename: newFilename, conflictAction: 'uniquify' });
 
     if (destination === '') {
       saveLog({ id: downloadItem.id, timestamp: new Date().toISOString(),
-        originalFilename: downloadItem.filename, newFilePath,
+        originalFilename: downloadItem.filename, newFilePath: newFilename,
         source: source.name, referrer: downloadItem.referrer ?? '', status: 'renamed'
       }).catch(console.error);
     }

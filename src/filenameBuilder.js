@@ -40,26 +40,21 @@ function sanitize(name) {
 }
 
 /**
- * downloadItem과 출처 정보를 바탕으로 최종 저장 경로를 생성한다.
+ * downloadItem과 출처 정보를 바탕으로 변경된 파일명을 생성한다.
+ * 폴더 경로 없이 파일명만 반환하며, Downloads 폴더에 바로 저장된 뒤
+ * 지정 폴더로 이동된다.
  *
  * 결과 예시:
- *   "AI출력물/NotebookLM/2026-04/NLM_20260410_전략플레이북.pdf"
+ *   "NLM_20260410_전략플레이북.pdf"
  *
  * @param {object} downloadItem - chrome.downloads.DownloadItem
  * @param {object} source       - SOURCES 객체 중 하나
- * @param {string} rootFolder   - 설정된 루트 폴더명
  * @returns {string}
  */
-export function buildFilePath(downloadItem, source, rootFolder) {
+export function buildFilename(downloadItem, source) {
   const rawFilename = downloadItem.filename.split(/[/\\]/).pop() || downloadItem.filename;
   const { baseName, ext } = splitFilename(rawFilename);
-  const { fileDate, folderDate } = formatDates(new Date());
-
+  const { fileDate } = formatDates(new Date());
   const safeBase = sanitize(baseName);
-  const safeRoot = sanitize(rootFolder);
-
-  const newFilename = `${source.prefix}_${fileDate}_${safeBase}${ext}`;
-  const folderPath = `${safeRoot}/${source.name}/${folderDate}`;
-
-  return `${folderPath}/${newFilename}`;
+  return `${source.prefix}_${fileDate}_${safeBase}${ext}`;
 }
