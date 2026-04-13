@@ -4,6 +4,19 @@
 
 ---
 
+## 다운로드 및 설치
+
+**[📦 최신 릴리즈 다운로드 → GitHub Releases](https://github.com/ABC-Group-Tech/DORA/releases/latest)**
+
+| OS | 다운로드 파일 | 포함 내용 |
+|----|-------------|----------|
+| 맥 | `DORA_mac.zip` | 설치 앱 + Chrome 확장 파일 + 설치가이드 (txt/PDF) |
+| 윈도우 | `DORA_windows.zip` | 설치 앱 + Chrome 확장 파일 + 설치가이드 (txt) |
+
+> 본인 OS에 맞는 zip 파일을 다운로드한 뒤 압축을 해제하고, 포함된 설치가이드를 확인하여 설치하세요.
+
+---
+
 ## 배경 및 문제 정의
 
 Claude, ChatGPT, NotebookLM 등 AI 도구에서 생성된 PDF/PPTX 파일을 다운로드하면 모두 `Downloads` 폴더에 무분별하게 쌓이는 문제가 있다. 출처와 날짜 기준의 수동 정리가 반복적으로 필요한 상황이다.
@@ -267,32 +280,12 @@ DORA/
 
 ## 사용자 설치 방법
 
-> 상세 안내는 릴리즈 페이지에서 `DORA_설치가이드.txt`를 함께 확인하세요.
+> 릴리즈 페이지에서 zip 파일을 다운로드한 뒤 포함된 설치가이드를 확인하세요.
 
-### Step 1. Chrome 확장 로드
-```
-1. chrome://extensions 접속
-2. 개발자 모드 ON
-3. "압축해제된 확장 프로그램 로드" → DORA_extension 폴더 선택
-4. 카드 하단의 Extension ID (32자리) 복사
-```
-
-### Step 2. 설치 프로그램 실행
-
-| OS | 파일 | 방법 |
-|----|------|------|
-| 맥 | `DORA_mac.zip` → `DORA_installer.app` | 우클릭 → 열기 (첫 실행 시) |
-| 윈도우 | `DORA_windows.zip` → `DORA_installer.exe` | 추가 정보 → 실행 |
-
-Extension ID 입력 → [설치 시작] → Chrome 완전 종료(Cmd+Q) 후 재시작
-
-### Step 3. 저장 폴더 설정
-```
-툴바 DORA 아이콘 클릭
-→ [AI 출처 관리] 섹션
-→ 각 출처 카드의 [폴더 선택]으로 저장 위치 지정
-→ 새 AI 도구 추가 시 [+ 추가] 버튼
-```
+| OS | 파일 | 설치 앱 |
+|----|------|--------|
+| 맥 | `DORA_mac.zip` | `DORA_installer.app` |
+| 윈도우 | `DORA_windows.zip` | `DORA_installer.exe` |
 
 ---
 
