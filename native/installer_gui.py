@@ -304,9 +304,15 @@ class DoraInstaller(tk.Tk):
                 time.sleep(1.5)
                 subprocess.run(['open', '-a', 'Google Chrome'], check=False)
             elif os_name == 'Windows':
+                # /F 강제 종료는 Chrome이 Preferences를 저장하지 못해
+                # 재시작 시 확장 프로그램 로드 정보가 사라지는 문제 발생.
+                # graceful 종료 후 충분히 대기하여 파일 저장 완료 후 재시작.
+                subprocess.run(['taskkill', '/IM', 'chrome.exe'],
+                               shell=True, check=False)
+                time.sleep(3)
                 subprocess.run(['taskkill', '/F', '/IM', 'chrome.exe'],
                                shell=True, check=False)
-                time.sleep(1.5)
+                time.sleep(1)
                 subprocess.run(['start', 'chrome'], shell=True, check=False)
         except Exception as e:
             from tkinter import messagebox
