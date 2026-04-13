@@ -287,33 +287,34 @@ class DoraInstaller(tk.Tk):
 
     def _ask_chrome_restart(self):
         from tkinter import messagebox
-        answer = messagebox.askyesno(
-            'Chrome 재시작',
-            'Chrome을 완전히 종료한 뒤 재시작해야 DORA가 적용됩니다.\n\n'
-            '지금 Chrome을 재시작하시겠습니까?'
-        )
-        if answer:
-            self._restart_chrome()
+        if platform.system() == 'Windows':
+            # Windows는 외부 프로세스로 Chrome을 종료하면
+            # Preferences 비동기 쓰기가 flush되지 않아
+            # 재시작 후 확장 프로그램 로드 정보가 사라짐.
+            # 사용자가 직접 종료해야 Chrome이 데이터를 정상 저장함.
+            messagebox.showinfo(
+                'Chrome 재시작 필요',
+                'DORA 적용을 위해 Chrome을 직접 완전히 종료한 뒤 재시작해주세요.\n\n'
+                '종료 방법:\n'
+                '작업 표시줄의 Chrome 아이콘 우클릭 → 창 모두 닫기\n\n'
+                '※ 자동 종료 시 확장 프로그램 로드 정보가 사라질 수 있어\n'
+                '  직접 종료를 권장합니다.'
+            )
+        else:
+            answer = messagebox.askyesno(
+                'Chrome 재시작',
+                'Chrome을 완전히 종료한 뒤 재시작해야 DORA가 적용됩니다.\n\n'
+                '지금 Chrome을 재시작하시겠습니까?'
+            )
+            if answer:
+                self._restart_chrome()
 
     def _restart_chrome(self):
         import time
-        os_name = platform.system()
         try:
-            if os_name == 'Darwin':
-                subprocess.run(['pkill', '-a', 'Google Chrome'], check=False)
-                time.sleep(1.5)
-                subprocess.run(['open', '-a', 'Google Chrome'], check=False)
-            elif os_name == 'Windows':
-                # /F 강제 종료는 Chrome이 Preferences를 저장하지 못해
-                # 재시작 시 확장 프로그램 로드 정보가 사라지는 문제 발생.
-                # graceful 종료 후 충분히 대기하여 파일 저장 완료 후 재시작.
-                subprocess.run(['taskkill', '/IM', 'chrome.exe'],
-                               shell=True, check=False)
-                time.sleep(3)
-                subprocess.run(['taskkill', '/F', '/IM', 'chrome.exe'],
-                               shell=True, check=False)
-                time.sleep(1)
-                subprocess.run(['start', 'chrome'], shell=True, check=False)
+            subprocess.run(['pkill', '-a', 'Google Chrome'], check=False)
+            time.sleep(1.5)
+            subprocess.run(['open', '-a', 'Google Chrome'], check=False)
         except Exception as e:
             from tkinter import messagebox
             messagebox.showwarning('Chrome 재시작 실패',
