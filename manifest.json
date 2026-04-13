@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "DORA - Document Organizer & Retrieval Assistant",
   "version": "1.0.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Xyolh6bUjEKsX5r6v91Onkf9xLrt0tCVubXKzD1Ddj+W81q+X94bSJG8uRBHjxfaSkwVfg6W9uwFgxwf80YLoroIXri60P82LsyFwHeW0vfIZdGKcTxkuIWHZ35iSVF2t4ZrJ9d2LgiKyPNVcl5Bp69pa0EI673HrnisAho7+PUS+eZkgOGve63hI533dce+ahgFvunFS8ZW+LAJ1RWrH9S4fs3A2BRNLReREy8qi/AIhCLdNTqlyQ0cU/yK6xjJtBOQyN9N1JNotMErdirVy2fFCZTFuHHrg/ifW3q6NRsxYkZzmmrqTyxY9yS2wmAUpZSYyH9wbmLJWX7DxVsgwIDAQAB",
   "description": "AI 도구(NotebookLM, Claude, ChatGPT)에서 다운로드된 문서를 자동으로 분류·정리합니다.",
   "permissions": [
     "downloads",

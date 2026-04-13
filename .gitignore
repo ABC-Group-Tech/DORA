@@ -7,3 +7,6 @@ native/*.spec
 .DS_Store
 __pycache__/
 *.pyc
+
+# Extension 서명 키 (절대 커밋 금지)
+native/dora_private.pem

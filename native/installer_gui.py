@@ -51,17 +51,20 @@ def get_bundled_host_path() -> str:
     return os.path.join(base, host_file)
 
 
-def build_manifest(host_path: str, ext_id: str) -> dict:
+EXTENSION_ID = "fmmefolhigiojpcaejdchkmbdlljmngf"
+
+
+def build_manifest(host_path: str) -> dict:
     return {
         "name": "com.abc.dora",
         "description": "DORA - 파일 이동 헬퍼",
         "path": host_path,
         "type": "stdio",
-        "allowed_origins": [f"chrome-extension://{ext_id}/"]
+        "allowed_origins": [f"chrome-extension://{EXTENSION_ID}/"]
     }
 
 
-def install_mac(ext_id: str) -> str:
+def install_mac() -> str:
     import shutil
 
     src = get_bundled_host_path()
@@ -84,12 +87,12 @@ def install_mac(ext_id: str) -> str:
 
     manifest_path = os.path.join(nm_dir, 'com.abc.dora.json')
     with open(manifest_path, 'w', encoding='utf-8') as f:
-        json.dump(build_manifest(host_path, ext_id), f, indent=2, ensure_ascii=False)
+        json.dump(build_manifest(host_path), f, indent=2, ensure_ascii=False)
 
     return manifest_path
 
 
-def install_windows(ext_id: str) -> str:
+def install_windows() -> str:
     import shutil
     import winreg  # Windows 전용
 
@@ -106,7 +109,7 @@ def install_windows(ext_id: str) -> str:
     # 매니페스트 파일 저장
     manifest_path = os.path.join(dora_dir, 'com.abc.dora.json')
     with open(manifest_path, 'w', encoding='utf-8') as f:
-        json.dump(build_manifest(host_path, ext_id), f, indent=2, ensure_ascii=False)
+        json.dump(build_manifest(host_path), f, indent=2, ensure_ascii=False)
 
     # 레지스트리 등록
     reg_key = r'Software\Google\Chrome\NativeMessagingHosts\com.abc.dora'
@@ -116,12 +119,12 @@ def install_windows(ext_id: str) -> str:
     return manifest_path
 
 
-def run_install(ext_id: str) -> str:
+def run_install() -> str:
     os_name = platform.system()
     if os_name == 'Darwin':
-        return install_mac(ext_id)
+        return install_mac()
     elif os_name == 'Windows':
-        return install_windows(ext_id)
+        return install_windows()
     else:
         raise RuntimeError(f"지원하지 않는 OS입니다: {os_name}")
 
@@ -181,23 +184,14 @@ class DoraInstaller(tk.Tk):
         open_btn.pack(anchor='w', padx=(28, 0), pady=(8, 16))
 
         # Step 2
-        self._step_label(body, '2', 'DORA 카드에 표시된 Extension ID를 입력하세요.')
+        self._step_label(body, '2', '설치 시작을 눌러 Native Host를 등록하세요.')
         desc2 = tk.Label(
             body,
-            text='확장 카드 하단에 표시된 영문+숫자 32자리 ID를 복사해 붙여넣으세요.',
+            text='확장 프로그램 로드 후 아래 버튼을 누르면\n'
+                 'Native Messaging 호스트가 자동으로 등록됩니다.',
             bg=C_BG, fg=C_MUTED, font=('', 10), justify='left'
         )
-        desc2.pack(anchor='w', padx=(28, 0), pady=(2, 8))
-
-        self.ext_id_var = tk.StringVar()
-        entry = tk.Entry(
-            body, textvariable=self.ext_id_var,
-            font=('Courier', 11), width=36,
-            relief='flat', highlightbackground=C_BORDER,
-            highlightthickness=1, highlightcolor=C_PRIMARY,
-        )
-        entry.pack(anchor='w', padx=(28, 0), ipadx=8, ipady=6)
-        entry.bind('<Return>', lambda e: self._install())
+        desc2.pack(anchor='w', padx=(28, 0), pady=(2, 16))
 
         # 설치 버튼
         install_btn = tk.Button(
@@ -208,7 +202,7 @@ class DoraInstaller(tk.Tk):
             activebackground='#4338ca', activeforeground='white',
             command=self._install
         )
-        install_btn.pack(pady=(20, 0))
+        install_btn.pack(pady=(0, 0))
 
         # 결과 메시지
         self.result_var = tk.StringVar()
@@ -243,16 +237,8 @@ class DoraInstaller(tk.Tk):
             self._show_result(f'Chrome을 열 수 없습니다: {e}', error=True)
 
     def _install(self):
-        ext_id = self.ext_id_var.get().strip()
-        if not ext_id:
-            self._show_result('Extension ID를 입력해주세요.', error=True)
-            return
-        if len(ext_id) != 32 or not ext_id.isalpha():
-            self._show_result('Extension ID는 영문 소문자 32자리입니다.\n다시 확인해주세요.', error=True)
-            return
-
         try:
-            manifest_path = run_install(ext_id)
+            manifest_path = run_install()
             self._show_result(
                 f'✅ 설치 완료!\n\nChrome을 완전히 종료한 뒤 다시 실행하면\nDORA가 정상 동작합니다.\n\n'
                 f'매니페스트 경로:\n{manifest_path}',
