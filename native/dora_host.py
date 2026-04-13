@@ -80,13 +80,45 @@ def move_file(src: str, dst: str) -> dict:
 
 
 def pick_folder(title: str = '저장 폴더 선택') -> dict:
-    """OS 기본 폴더 선택 창을 열고 선택된 절대 경로를 반환한다."""
+    """OS 기본 폴더 선택 창을 열고 선택된 절대 경로를 반환한다.
+
+    macOS: osascript(choose folder) 우선 사용.
+      Finder는 전체 디스크 접근 권한을 보유하므로 TCC 권한 알림 없이 동작한다.
+      실패 시 tkinter fallback.
+    Windows: tkinter filedialog 사용.
+    """
+    if sys.platform == 'darwin':
+        result = _pick_folder_osascript(title)
+        if result is not None:
+            return result
+        # osascript 실패 시 tkinter fallback
+    return _pick_folder_tkinter(title)
+
+
+def _pick_folder_osascript(title: str):
+    """macOS 전용: osascript choose folder로 폴더 선택."""
+    script = f'POSIX path of (choose folder with prompt "{title}")'
+    try:
+        result = subprocess.run(
+            ['/usr/bin/osascript', '-e', script],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            path = result.stdout.strip().rstrip('/')
+            return {'success': True, 'path': path}
+        # 취소(returncode != 0)도 정상 흐름
+        return {'success': False, 'error': 'cancelled'}
+    except Exception:
+        return None  # fallback 신호
+
+
+def _pick_folder_tkinter(title: str) -> dict:
+    """tkinter filedialog로 폴더 선택 (Windows 및 macOS fallback)."""
     try:
         import tkinter as tk
         from tkinter import filedialog
 
         root = tk.Tk()
-        # 다이얼로그가 화면 중앙에 뜨도록 루트를 중앙에 먼저 배치 후 숨김
         sw = root.winfo_screenwidth()
         sh = root.winfo_screenheight()
         root.geometry(f'1x1+{sw // 2}+{sh // 2}')
@@ -94,10 +126,7 @@ def pick_folder(title: str = '저장 폴더 선택') -> dict:
         root.withdraw()
         root.wm_attributes('-topmost', 1)
 
-        folder = filedialog.askdirectory(
-            title=title,
-            parent=root
-        )
+        folder = filedialog.askdirectory(title=title, parent=root)
         root.destroy()
 
         if folder:
