@@ -114,6 +114,7 @@ jobs:
           cp manifest.json background.js DORA_mac/DORA_extension/
           cp -r src popup icons DORA_mac/DORA_extension/
           cp DORA_설치가이드.txt DORA_mac/
+          cp "MAC_DORA 설치 가이드.pdf" DORA_mac/
           zip -r DORA_mac.zip DORA_mac/
 
       - name: 윈도우 패키지 생성
