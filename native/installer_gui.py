@@ -360,6 +360,13 @@ class DoraInstaller(tk.Tk):
     def _show_result(self, msg, error=False):
         self.result_var.set(msg)
         self.result_label.configure(fg=C_ERROR if error else C_SUCCESS)
+        # 텍스트 추가 후 창 높이를 콘텐츠에 맞게 재조정
+        self.update_idletasks()
+        w = self.winfo_width()
+        h = self.winfo_reqheight()
+        x = self.winfo_x()
+        y = self.winfo_y()
+        self.geometry(f'{w}x{h}+{x}+{y}')
 
 
 def main():
