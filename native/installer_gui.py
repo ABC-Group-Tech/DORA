@@ -166,20 +166,31 @@ class DoraInstaller(tk.Tk):
 
         # Step 1
         self._step_label(body, '1', 'Chrome에 확장 프로그램을 먼저 로드해주세요.')
+
+        is_windows = platform.system() == 'Windows'
+
+        desc1_text = (
+            'chrome://extensions 를 Chrome 주소창에 붙여넣고\n'
+            '개발자 모드를 켠 뒤 "압축해제된 확장 프로그램 로드"로\n'
+            'DORA 폴더를 선택하세요.'
+            if is_windows else
+            'chrome://extensions 에서 개발자 모드를 켜고\n'
+            '"압축해제된 확장 프로그램 로드"로 DORA 폴더를 선택하세요.'
+        )
         desc1 = tk.Label(
-            body,
-            text='chrome://extensions 에서 개발자 모드를 켜고\n'
-                 '"압축해제된 확장 프로그램 로드"로 DORA 폴더를 선택하세요.',
+            body, text=desc1_text,
             bg=C_BG, fg=C_MUTED, font=('', 10), justify='left'
         )
         desc1.pack(anchor='w', padx=(28, 0), pady=(2, 0))
 
+        btn_text = 'chrome://extensions 복사' if is_windows else 'chrome://extensions 열기'
+        btn_cmd  = self._copy_extensions_url if is_windows else self._open_extensions
         open_btn = tk.Button(
-            body, text='chrome://extensions 열기',
+            body, text=btn_text,
             bg=C_SURFACE, fg=C_PRIMARY, relief='flat',
             font=('', 10), cursor='hand2', padx=8, pady=4,
             highlightbackground=C_BORDER, highlightthickness=1,
-            command=self._open_extensions
+            command=btn_cmd
         )
         open_btn.pack(anchor='w', padx=(28, 0), pady=(8, 16))
 
@@ -222,6 +233,18 @@ class DoraInstaller(tk.Tk):
 
         tk.Label(frame, text=f'  {text}', bg=C_BG, fg=C_TEXT,
                  font=('', 11, 'bold')).pack(side='left')
+
+    def _copy_extensions_url(self):
+        """Windows 전용: chrome://extensions URL을 클립보드에 복사한다."""
+        url = 'chrome://extensions'
+        self.clipboard_clear()
+        self.clipboard_append(url)
+        self.update()
+        self._show_result(
+            '클립보드에 복사되었습니다.\n'
+            'Chrome 주소창에 Ctrl+V 후 Enter를 누르세요.',
+            error=False
+        )
 
     def _open_extensions(self):
         url = 'chrome://extensions'
