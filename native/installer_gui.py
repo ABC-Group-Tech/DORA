@@ -288,18 +288,7 @@ class DoraInstaller(tk.Tk):
     def _ask_chrome_restart(self):
         from tkinter import messagebox
         if platform.system() == 'Windows':
-            # Windows는 외부 프로세스로 Chrome을 종료하면
-            # Preferences 비동기 쓰기가 flush되지 않아
-            # 재시작 후 확장 프로그램 로드 정보가 사라짐.
-            # 사용자가 직접 종료해야 Chrome이 데이터를 정상 저장함.
-            messagebox.showinfo(
-                'Chrome 재시작 필요',
-                'DORA 적용을 위해 Chrome을 직접 완전히 종료한 뒤 재시작해주세요.\n\n'
-                '종료 방법:\n'
-                '작업 표시줄의 Chrome 아이콘 우클릭 → 창 모두 닫기\n\n'
-                '※ 자동 종료 시 확장 프로그램 로드 정보가 사라질 수 있어\n'
-                '  직접 종료를 권장합니다.'
-            )
+            self._show_windows_restart_dialog()
         else:
             answer = messagebox.askyesno(
                 'Chrome 재시작',
@@ -308,6 +297,54 @@ class DoraInstaller(tk.Tk):
             )
             if answer:
                 self._restart_chrome()
+
+    def _show_windows_restart_dialog(self):
+        """Windows 전용: 크기 제어가 가능한 커스텀 재시작 안내 창."""
+        dialog = tk.Toplevel(self)
+        dialog.title('Chrome 재시작 필요')
+        dialog.configure(bg=C_BG)
+        dialog.resizable(False, False)
+        dialog.grab_set()  # 모달
+
+        # 본문
+        body = tk.Frame(dialog, bg=C_BG, padx=28, pady=24)
+        body.pack(fill='both', expand=True)
+
+        tk.Label(
+            body, text='Chrome 재시작 필요',
+            bg=C_BG, fg=C_TEXT, font=('', 13, 'bold'), justify='left'
+        ).pack(anchor='w', pady=(0, 12))
+
+        msg = (
+            'DORA 적용을 위해 Chrome을 직접 완전히\n'
+            '종료한 뒤 재시작해주세요.\n\n'
+            '종료 방법:\n'
+            '작업 표시줄의 Chrome 아이콘 우클릭\n'
+            '→ 창 모두 닫기\n\n'
+            '※ 자동 종료 시 확장 프로그램 로드 정보가\n'
+            '  사라질 수 있어 직접 종료를 권장합니다.'
+        )
+        tk.Label(
+            body, text=msg,
+            bg=C_BG, fg=C_MUTED, font=('', 10), justify='left'
+        ).pack(anchor='w', pady=(0, 20))
+
+        tk.Button(
+            body, text='확인',
+            bg=C_PRIMARY, fg='white', relief='flat',
+            font=('', 11, 'bold'), cursor='hand2',
+            padx=0, pady=8, width=20,
+            activebackground='#4338ca', activeforeground='white',
+            command=dialog.destroy
+        ).pack()
+
+        # 화면 중앙 배치
+        dialog.update_idletasks()
+        w, h = dialog.winfo_width(), dialog.winfo_height()
+        sw, sh = dialog.winfo_screenwidth(), dialog.winfo_screenheight()
+        dialog.geometry(f'{w}x{h}+{(sw - w) // 2}+{(sh - h) // 2}')
+        dialog.attributes('-topmost', True)
+        dialog.after(300, lambda: dialog.attributes('-topmost', False))
 
     def _restart_chrome(self):
         import time
