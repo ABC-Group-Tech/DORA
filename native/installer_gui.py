@@ -230,7 +230,22 @@ class DoraInstaller(tk.Tk):
             if os_name == 'Darwin':
                 subprocess.run(['open', '-a', 'Google Chrome', url])
             elif os_name == 'Windows':
-                subprocess.run(['start', 'chrome', url], shell=True)
+                # start 명령은 chrome:// 스킴을 OS 핸들러에서 찾아 실패함.
+                # Chrome 실행 파일을 직접 찾아 URL을 인자로 전달해야 함.
+                chrome_paths = [
+                    os.path.expandvars(r'%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe'),
+                    r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+                    r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+                ]
+                chrome_exe = next((p for p in chrome_paths if os.path.isfile(p)), None)
+                if chrome_exe:
+                    subprocess.Popen([chrome_exe, url])
+                else:
+                    self._show_result(
+                        'Chrome 실행 파일을 찾을 수 없습니다.\n'
+                        'Chrome 주소창에 chrome://extensions 를 직접 입력해주세요.',
+                        error=True
+                    )
             else:
                 subprocess.run(['xdg-open', url])
         except Exception as e:
