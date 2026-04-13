@@ -124,6 +124,7 @@ jobs:
           cp manifest.json background.js DORA_windows/DORA_extension/
           cp -r src popup icons DORA_windows/DORA_extension/
           cp DORA_설치가이드.txt DORA_windows/
+          cp "WINDOW_DORA 설치 가이드.pdf" DORA_windows/
           zip -r DORA_windows.zip DORA_windows/
 
       - name: GitHub Release 생성 및 파일 첨부
